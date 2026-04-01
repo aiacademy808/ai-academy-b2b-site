@@ -2,26 +2,118 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+  body {
+    @apply bg-bg-dark text-text-primary font-body;
   }
 }
 
-body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+@layer components {
+  /* Dot-grid background pattern */
+  .bg-dot-grid {
+    background-image: radial-gradient(
+      circle,
+      rgba(255, 255, 255, 0.04) 1px,
+      transparent 1px
+    );
+    background-size: 24px 24px;
+  }
+
+  /* Gradient brand classes */
+  .gradient-brand {
+    background: linear-gradient(135deg, #00e5ff 0%, #a78bfa 100%);
+  }
+
+  .gradient-brand-text {
+    background: linear-gradient(135deg, #00e5ff 0%, #a78bfa 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .gradient-accent {
+    background: linear-gradient(135deg, #00e5ff 0%, #10b981 100%);
+  }
+
+  .gradient-hero {
+    background: radial-gradient(
+      ellipse at 50% 0%,
+      rgba(0, 229, 255, 0.08) 0%,
+      transparent 60%
+    );
+  }
 }
 
-@layer utilities {
-  .text-balance {
-    text-wrap: balance;
-  }
+/* Custom scrollbar for dark theme */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #060810;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #1e2540;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #2a3358;
+}
+
+/* Firefox scrollbar */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #1e2540 #060810;
+}
+
+/* Admin light theme overrides */
+.admin-light {
+  background: #f9fafb !important;
+  color: #111827 !important;
+  -webkit-text-fill-color: unset;
+}
+
+.admin-light * {
+  scrollbar-color: #d1d5db #f9fafb;
+}
+
+.admin-light ::-webkit-scrollbar-track {
+  background: #f9fafb;
+}
+
+.admin-light ::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+}
+
+.admin-light ::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
+}
+
+.admin-light input,
+.admin-light textarea,
+.admin-light select {
+  color: #111827;
+  background: #ffffff;
+}
+
+.admin-light input::placeholder,
+.admin-light textarea::placeholder {
+  color: #9ca3af;
+}
+
+.admin-light input:focus,
+.admin-light textarea:focus,
+.admin-light select:focus {
+  outline: none;
+  ring: 2px;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3);
 }
