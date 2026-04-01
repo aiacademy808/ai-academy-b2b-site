@@ -1,4 +1,5 @@
 import { Mail, Phone, MapPin } from 'lucide-react';
+import Image from 'next/image';
 
 const navLinks = [
   { label: 'Продукты', href: '#products' },
@@ -14,8 +15,14 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
           {/* Logo & description */}
           <div>
-            <a href="/" className="text-xl font-bold text-white">
-              AI <span className="text-[#00e5ff]">Academy</span>
+            <a href="/" className="inline-block">
+              <Image
+                src="/logo.svg"
+                alt="AI Academy"
+                width={160}
+                height={26}
+                className="h-7 w-auto"
+              />
             </a>
             <p className="mt-4 text-sm text-gray-400 leading-relaxed max-w-xs">
               Внедряем искусственный интеллект в реальные бизнес-процессы

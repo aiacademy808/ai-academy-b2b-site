@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Menu, X } from 'lucide-react';
+import Image from 'next/image';
 
 const navLinks = [
   { label: 'Продукты', href: '#products' },
@@ -32,10 +33,15 @@ export default function Header() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16 md:h-20">
           {/* Logo */}
-          <a href="/" className="flex items-center gap-2">
-            <span className="text-xl md:text-2xl font-bold text-white tracking-tight">
-              AI <span className="text-[#00e5ff]">Academy</span>
-            </span>
+          <a href="/" className="flex items-center">
+            <Image
+              src="/logo.svg"
+              alt="AI Academy"
+              width={160}
+              height={26}
+              className="h-6 md:h-7 w-auto"
+              priority
+            />
           </a>
 
           {/* Desktop nav */}
