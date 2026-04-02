@@ -1,24 +1,12 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import {
-  FileText,
-  Brain,
-  Headphones,
-  MessageCircle,
-  BarChart3,
-  CheckCircle,
-  AlertTriangle,
-  Zap,
-  Shield,
-  Cpu,
-  TrendingUp,
-  Globe,
-  Bot,
-  Settings,
-  Activity,
-  Route,
-  Bell,
-  Layers,
+  FileText, Brain, Headphones, MessageCircle, BarChart3, CheckCircle,
+  AlertTriangle, Zap, Shield, Cpu, TrendingUp, Globe, Bot, Settings,
+  Activity, Route, Bell, Layers, ScanLine, ShieldCheck, Plug, RefreshCw,
+  Database, BrainCircuit, AudioLines, Star, MessageSquare, UserPlus,
+  Cog, Truck, Landmark, ShoppingCart, Factory, ShoppingBag, Radio,
+  Handshake, Wrench, UtensilsCrossed,
 } from "lucide-react";
 import Header from "@/components/sections/Header";
 import Footer from "@/components/sections/Footer";
@@ -55,14 +43,14 @@ export async function generateMetadata({
 }
 
 /* ------------------------------------------------------------------ */
-/*  Feature icons map                                                  */
+/*  Icon name → component map                                          */
 /* ------------------------------------------------------------------ */
-const featureIconSets: Record<string, React.ElementType[]> = {
-  "umnaya-pervichka": [FileText, Shield, Layers, Zap],
-  "ml-model": [Brain, Cpu, TrendingUp, Settings],
-  "crm-assistant": [Headphones, CheckCircle, AlertTriangle, FileText],
-  "whatsapp-bot": [Bot, MessageCircle, Globe, Activity],
-  optimizer: [BarChart3, Cpu, Route, Bell],
+const ICON_MAP: Record<string, React.ElementType> = {
+  ScanLine, ShieldCheck, Plug, Layers, RefreshCw, Database, BrainCircuit, Activity,
+  AudioLines, Star, AlertTriangle, FileText, Bot, MessageSquare, UserPlus, Globe,
+  BarChart3, Cog, Route, Bell, Truck, Landmark, ShoppingCart, Factory,
+  ShoppingBag, Radio, Handshake, Shield, Wrench, UtensilsCrossed, Zap,
+  Brain, Headphones, MessageCircle, CheckCircle, Cpu, TrendingUp, Settings,
 };
 
 /* ------------------------------------------------------------------ */
@@ -89,7 +77,6 @@ export default async function ProductPage({
   if (!product) notFound();
 
   const accent = product.accentColor;
-  const icons = featureIconSets[product.slug] ?? [Zap, Zap, Zap, Zap];
   const kpiItems = product.kpiItems as { value: string; label: string; source: string }[];
   const pains = product.pains as { title: string; description: string }[];
   const features = product.features as { title: string; description: string; icon: string }[];
@@ -206,7 +193,7 @@ export default async function ProductPage({
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 lg:gap-8">
             {features.map((feat, i) => {
-              const Icon = icons[i] ?? Zap;
+              const Icon = ICON_MAP[feat.icon] ?? Zap;
               return (
                 <div
                   key={i}
