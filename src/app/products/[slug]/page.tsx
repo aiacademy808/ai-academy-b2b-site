@@ -22,14 +22,13 @@ import {
 } from "lucide-react";
 import Header from "@/components/sections/Header";
 import Footer from "@/components/sections/Footer";
-import { getProductBySlug, getAllProductSlugs } from "@/data/products";
+import { getProductBySlug, getSettings } from "@/lib/data";
+
+export const dynamic = 'force-dynamic';
 
 /* ------------------------------------------------------------------ */
-/*  Static params for SSG                                              */
+/*  No static params - pages render on demand from DB                  */
 /* ------------------------------------------------------------------ */
-export function generateStaticParams() {
-  return getAllProductSlugs().map((slug) => ({ slug }));
-}
 
 /* ------------------------------------------------------------------ */
 /*  Dynamic metadata                                                   */
@@ -40,7 +39,7 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
-  const product = getProductBySlug(slug);
+  const product = await getProductBySlug(slug);
   if (!product) return { title: "Продукт не найден" };
 
   return {
@@ -82,22 +81,26 @@ export default async function ProductPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const product = getProductBySlug(slug);
+  const [product, settings] = await Promise.all([
+    getProductBySlug(slug),
+    getSettings(),
+  ]);
 
   if (!product) notFound();
 
   const accent = product.accentColor;
   const icons = featureIconSets[product.slug] ?? [Zap, Zap, Zap, Zap];
+  const kpiItems = product.kpiItems as { value: string; label: string; source: string }[];
+  const pains = product.pains as { title: string; description: string }[];
+  const features = product.features as { title: string; description: string; icon: string }[];
+  const whatsappNumber = settings.whatsappNumber || '996555000000';
 
   return (
     <>
       <Header />
 
-      {/* ============================================================ */}
-      {/*  HERO                                                        */}
-      {/* ============================================================ */}
+      {/* HERO */}
       <section className="relative pt-32 pb-20 md:pt-40 md:pb-28 overflow-hidden">
-        {/* Radial glow background */}
         <div
           className="absolute inset-0 pointer-events-none"
           style={{
@@ -125,7 +128,7 @@ export default async function ProductPage({
 
           {/* KPI row */}
           <div className="flex flex-wrap justify-center gap-8 md:gap-16 mb-12">
-            {product.kpi.map((k, i) => (
+            {kpiItems.map((k, i) => (
               <div key={i} className="text-center">
                 <div
                   className="text-3xl md:text-4xl font-heading font-bold mb-1"
@@ -148,7 +151,7 @@ export default async function ProductPage({
               Оставить заявку
             </a>
             <a
-              href="https://wa.me/996555000000"
+              href={`https://wa.me/${whatsappNumber.replace(/[^0-9]/g, '')}`}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center justify-center rounded-full border px-8 py-3.5 text-sm font-semibold text-white transition-all duration-300 hover:bg-white/5"
@@ -161,29 +164,21 @@ export default async function ProductPage({
         </div>
       </section>
 
-      {/* ============================================================ */}
-      {/*  PAINS                                                       */}
-      {/* ============================================================ */}
+      {/* PAINS */}
       <section className="py-16 md:py-24 bg-dot-grid">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <h2 className="font-heading text-2xl md:text-3xl font-bold text-white text-center mb-4">
-            Знакомые{" "}
-            <span style={{ color: accent }}>проблемы</span>?
+            Знакомые <span style={{ color: accent }}>проблемы</span>?
           </h2>
           <p className="text-gray-400 text-center mb-12 max-w-xl mx-auto">
             Если хотя бы один пункт про вас — мы можем помочь.
           </p>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {product.pains.map((pain, i) => (
+            {pains.map((pain, i) => (
               <div
                 key={i}
                 className="group relative rounded-card bg-surface border border-border p-6 md:p-8 transition-all duration-300 hover:border-opacity-60 hover:shadow-card-hover"
-                style={
-                  {
-                    "--hover-border": accent,
-                  } as React.CSSProperties
-                }
               >
                 <div
                   className="flex items-center justify-center w-10 h-10 rounded-xl mb-5"
@@ -191,16 +186,15 @@ export default async function ProductPage({
                 >
                   <AlertTriangle size={20} style={{ color: accent }} />
                 </div>
-                <p className="text-gray-300 leading-relaxed">{pain}</p>
+                <h3 className="text-white font-semibold mb-2">{pain.title}</h3>
+                <p className="text-gray-300 leading-relaxed text-sm">{pain.description}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* ============================================================ */}
-      {/*  FEATURES                                                    */}
-      {/* ============================================================ */}
+      {/* FEATURES */}
       <section className="py-16 md:py-24">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <h2 className="font-heading text-2xl md:text-3xl font-bold text-white text-center mb-4">
@@ -211,7 +205,7 @@ export default async function ProductPage({
           </p>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 lg:gap-8">
-            {product.features.map((feat, i) => {
+            {features.map((feat, i) => {
               const Icon = icons[i] ?? Zap;
               return (
                 <div
@@ -224,9 +218,10 @@ export default async function ProductPage({
                   >
                     <Icon size={22} style={{ color: accent }} />
                   </div>
-                  <p className="text-gray-300 leading-relaxed pt-2.5">
-                    {feat}
-                  </p>
+                  <div>
+                    <h3 className="text-white font-semibold mb-1">{feat.title}</h3>
+                    <p className="text-gray-300 leading-relaxed text-sm">{feat.description}</p>
+                  </div>
                 </div>
               );
             })}
@@ -234,21 +229,18 @@ export default async function ProductPage({
         </div>
       </section>
 
-      {/* ============================================================ */}
-      {/*  KPI WITH SOURCES                                            */}
-      {/* ============================================================ */}
+      {/* KPI WITH SOURCES */}
       <section className="py-16 md:py-24 bg-dot-grid">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <h2 className="font-heading text-2xl md:text-3xl font-bold text-white text-center mb-4">
-            Цифры, подтверждённые{" "}
-            <span style={{ color: accent }}>исследованиями</span>
+            Цифры, подтверждённые <span style={{ color: accent }}>исследованиями</span>
           </h2>
           <p className="text-gray-400 text-center mb-12 max-w-xl mx-auto">
             Каждый показатель основан на данных из открытых источников
           </p>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {product.kpi.map((k, i) => (
+            {kpiItems.map((k, i) => (
               <div
                 key={i}
                 className="relative rounded-card bg-surface border border-border p-8 text-center transition-all duration-300 hover:shadow-card-hover"
@@ -270,9 +262,7 @@ export default async function ProductPage({
         </div>
       </section>
 
-      {/* ============================================================ */}
-      {/*  PRICING                                                     */}
-      {/* ============================================================ */}
+      {/* PRICING */}
       <section id="pricing" className="py-16 md:py-24">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <h2 className="font-heading text-2xl md:text-3xl font-bold text-white text-center mb-4">
@@ -283,21 +273,17 @@ export default async function ProductPage({
           </p>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8">
-            {product.pricing.map((tier, i) => {
-              const isMiddle = i === 1;
+            {product.pricingTiers.map((tier, i) => {
+              const isPopular = tier.isPopular;
               return (
                 <div
                   key={i}
                   className={`relative rounded-card bg-surface p-8 transition-all duration-300 hover:shadow-card-hover ${
-                    isMiddle ? "border-2 md:scale-105" : "border border-border"
+                    isPopular ? "border-2 md:scale-105" : "border border-border"
                   }`}
-                  style={
-                    isMiddle
-                      ? { borderColor: accent }
-                      : undefined
-                  }
+                  style={isPopular ? { borderColor: accent } : undefined}
                 >
-                  {isMiddle && (
+                  {isPopular && (
                     <div
                       className="absolute -top-3.5 left-1/2 -translate-x-1/2 text-xs font-semibold text-white px-4 py-1 rounded-full"
                       style={{ background: accent }}
@@ -308,9 +294,9 @@ export default async function ProductPage({
 
                   <div className="text-center mb-6">
                     <h3 className="font-heading text-lg font-bold text-white mb-2">
-                      {tier.tier}
+                      {tier.tierName}
                     </h3>
-                    <p className="text-sm text-gray-400 mb-4">{tier.desc}</p>
+                    <p className="text-sm text-gray-400 mb-4">{tier.description}</p>
                     <div className="flex items-baseline justify-center gap-1">
                       <span
                         className="text-3xl md:text-4xl font-heading font-bold"
@@ -322,15 +308,25 @@ export default async function ProductPage({
                     </div>
                   </div>
 
+                  {/* Features list */}
+                  <ul className="space-y-2 mb-6">
+                    {(tier.features as string[]).map((f, fi) => (
+                      <li key={fi} className="flex items-start gap-2 text-sm text-gray-300">
+                        <CheckCircle size={14} className="mt-0.5 shrink-0" style={{ color: accent }} />
+                        {f}
+                      </li>
+                    ))}
+                  </ul>
+
                   <a
                     href="#contact"
                     className={`block w-full text-center rounded-full py-3 text-sm font-semibold transition-all duration-300 hover:scale-105 ${
-                      isMiddle
+                      isPopular
                         ? "text-white"
                         : "border text-white hover:bg-white/5"
                     }`}
                     style={
-                      isMiddle
+                      isPopular
                         ? { background: accent }
                         : { borderColor: `${accent}40` }
                     }
@@ -344,9 +340,7 @@ export default async function ProductPage({
         </div>
       </section>
 
-      {/* ============================================================ */}
-      {/*  CTA                                                         */}
-      {/* ============================================================ */}
+      {/* CTA */}
       <section id="contact" className="py-16 md:py-24 bg-dot-grid">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="font-heading text-2xl md:text-3xl font-bold text-white mb-4">
@@ -366,7 +360,7 @@ export default async function ProductPage({
               Оставить заявку
             </a>
             <a
-              href="https://wa.me/996555000000"
+              href={`https://wa.me/${whatsappNumber.replace(/[^0-9]/g, '')}`}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center justify-center rounded-full border px-8 py-3.5 text-sm font-semibold text-white transition-all duration-300 hover:bg-white/5"
@@ -379,7 +373,7 @@ export default async function ProductPage({
         </div>
       </section>
 
-      <Footer />
+      <Footer settings={settings} />
     </>
   );
 }

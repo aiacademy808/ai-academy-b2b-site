@@ -4,15 +4,12 @@ import { useState, type FormEvent } from 'react';
 import { motion } from 'framer-motion';
 import { Send, CheckCircle, Loader2 } from 'lucide-react';
 
-const productOptions = [
-  'Умная первичка',
-  'Обучение ML-модели',
-  'CRM-Ассистент',
-  'WhatsApp-Бот',
-  'Оптимизатор',
-];
+interface ContactFormProps {
+  productNames: string[];
+  whatsappNumber?: string;
+}
 
-export default function ContactForm() {
+export default function ContactForm({ productNames, whatsappNumber }: ContactFormProps) {
   const [form, setForm] = useState({
     name: '',
     company: '',
@@ -60,12 +57,18 @@ export default function ContactForm() {
             className="bg-[#0d1120] border border-[#1e2540] rounded-2xl p-12"
           >
             <CheckCircle size={56} className="text-[#10b981] mx-auto mb-4" />
-            <h3 className="text-2xl font-bold text-white mb-3">
-              Спасибо!
-            </h3>
-            <p className="text-gray-400">
-              Свяжемся в течение 2 часов
-            </p>
+            <h3 className="text-2xl font-bold text-white mb-3">Спасибо!</h3>
+            <p className="text-gray-400 mb-6">Свяжемся в течение 2 часов</p>
+            {whatsappNumber && (
+              <a
+                href={`https://wa.me/${whatsappNumber.replace(/[^0-9]/g, '')}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 border border-[#00e5ff] text-[#00e5ff] font-medium rounded-full px-6 py-2.5 hover:bg-[#00e5ff]/10 transition-colors"
+              >
+                Написать в WhatsApp
+              </a>
+            )}
           </motion.div>
         </div>
       </section>
@@ -86,8 +89,7 @@ export default function ContactForm() {
             Получите бесплатный Digital Maturity Audit
           </h2>
           <p className="text-gray-400">
-            Оставьте заявку — в течение 2 часов свяжемся, обсудим задачу и
-            предложим решение.
+            Оставьте заявку — в течение 2 часов свяжемся, обсудим задачу и предложим решение.
           </p>
         </motion.div>
 
@@ -99,7 +101,6 @@ export default function ContactForm() {
           onSubmit={handleSubmit}
           className="bg-[#0d1120] border border-[#1e2540] rounded-2xl p-6 sm:p-8 space-y-5"
         >
-          {/* Name */}
           <div>
             <label htmlFor="name" className="block text-sm text-gray-400 mb-1.5">
               Имя <span className="text-red-400">*</span>
@@ -115,11 +116,8 @@ export default function ContactForm() {
             />
           </div>
 
-          {/* Company */}
           <div>
-            <label htmlFor="company" className="block text-sm text-gray-400 mb-1.5">
-              Компания
-            </label>
+            <label htmlFor="company" className="block text-sm text-gray-400 mb-1.5">Компания</label>
             <input
               id="company"
               type="text"
@@ -130,7 +128,6 @@ export default function ContactForm() {
             />
           </div>
 
-          {/* Phone */}
           <div>
             <label htmlFor="phone" className="block text-sm text-gray-400 mb-1.5">
               Телефон / WhatsApp <span className="text-red-400">*</span>
@@ -146,11 +143,8 @@ export default function ContactForm() {
             />
           </div>
 
-          {/* Email */}
           <div>
-            <label htmlFor="email" className="block text-sm text-gray-400 mb-1.5">
-              Email
-            </label>
+            <label htmlFor="email" className="block text-sm text-gray-400 mb-1.5">Email</label>
             <input
               id="email"
               type="email"
@@ -161,13 +155,10 @@ export default function ContactForm() {
             />
           </div>
 
-          {/* Product checkboxes */}
           <div>
-            <label className="block text-sm text-gray-400 mb-3">
-              Интересующий продукт
-            </label>
+            <label className="block text-sm text-gray-400 mb-3">Интересующий продукт</label>
             <div className="flex flex-wrap gap-2">
-              {productOptions.map((product) => (
+              {productNames.map((product) => (
                 <button
                   key={product}
                   type="button"
@@ -184,11 +175,8 @@ export default function ContactForm() {
             </div>
           </div>
 
-          {/* Message */}
           <div>
-            <label htmlFor="message" className="block text-sm text-gray-400 mb-1.5">
-              Сообщение
-            </label>
+            <label htmlFor="message" className="block text-sm text-gray-400 mb-1.5">Сообщение</label>
             <textarea
               id="message"
               rows={4}
@@ -199,14 +187,12 @@ export default function ContactForm() {
             />
           </div>
 
-          {/* Error message */}
           {status === 'error' && (
             <p className="text-red-400 text-sm">
               Произошла ошибка. Попробуйте ещё раз или свяжитесь по WhatsApp.
             </p>
           )}
 
-          {/* Submit */}
           <button
             type="submit"
             disabled={status === 'loading'}

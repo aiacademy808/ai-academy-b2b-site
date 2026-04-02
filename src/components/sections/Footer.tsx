@@ -8,7 +8,19 @@ const navLinks = [
   { label: 'Контакты', href: '#contact' },
 ];
 
-export default function Footer() {
+interface FooterProps {
+  settings: {
+    phone?: string;
+    email?: string;
+    address?: string;
+  };
+}
+
+export default function Footer({ settings }: FooterProps) {
+  const phone = settings.phone || '+996 555 000 000';
+  const email = settings.email || 'info@ai-academy.kg';
+  const address = settings.address || 'Бишкек, Кыргызская Республика';
+
   return (
     <footer className="bg-[#060810] border-t border-[#1e2540] py-12 px-4">
       <div className="max-w-7xl mx-auto">
@@ -55,22 +67,22 @@ export default function Footer() {
             </h4>
             <div className="flex flex-col gap-3">
               <a
-                href="tel:+996555000000"
+                href={`tel:${phone.replace(/\s/g, '')}`}
                 className="flex items-center gap-3 text-sm text-gray-400 hover:text-white transition-colors"
               >
                 <Phone size={16} className="text-[#00e5ff] shrink-0" />
-                +996 555 000 000
+                {phone}
               </a>
               <a
-                href="mailto:info@ai-academy.kg"
+                href={`mailto:${email}`}
                 className="flex items-center gap-3 text-sm text-gray-400 hover:text-white transition-colors"
               >
                 <Mail size={16} className="text-[#00e5ff] shrink-0" />
-                info@ai-academy.kg
+                {email}
               </a>
               <div className="flex items-center gap-3 text-sm text-gray-400">
                 <MapPin size={16} className="text-[#00e5ff] shrink-0" />
-                Бишкек, Кыргызская Республика
+                {address}
               </div>
             </div>
           </div>
@@ -79,7 +91,7 @@ export default function Footer() {
         {/* Bottom bar */}
         <div className="mt-10 pt-6 border-t border-[#1e2540] text-center">
           <p className="text-xs text-gray-500">
-            &copy; 2026 AI Academy. Все права защищены.
+            &copy; {new Date().getFullYear()} AI Academy. Все права защищены.
           </p>
         </div>
       </div>

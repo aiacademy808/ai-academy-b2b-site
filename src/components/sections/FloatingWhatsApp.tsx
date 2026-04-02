@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { MessageCircle } from 'lucide-react';
 
-export default function FloatingWhatsApp() {
+export default function FloatingWhatsApp({ number }: { number?: string }) {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
@@ -11,13 +11,13 @@ export default function FloatingWhatsApp() {
     return () => clearTimeout(timer);
   }, []);
 
-  const whatsappNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '996555000000';
+  const whatsappNumber = number || process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '996555000000';
 
   if (!visible) return null;
 
   return (
     <a
-      href={`https://wa.me/${whatsappNumber}`}
+      href={`https://wa.me/${whatsappNumber.replace(/[^0-9]/g, '')}`}
       target="_blank"
       rel="noopener noreferrer"
       aria-label="WhatsApp"
