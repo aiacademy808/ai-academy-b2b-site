@@ -3,13 +3,14 @@
 import { useEffect, useState } from 'react';
 
 interface Stats {
-  totalProducts: number;
-  totalApplications: number;
-  newApplications: number;
-  inProgressApplications: number;
-  closedApplications: number;
-  totalCases: number;
-  totalBlogPosts: number;
+  products: number;
+  applications: {
+    total: number;
+    new: number;
+    in_progress: number;
+  };
+  cases: number;
+  blogPosts: number;
 }
 
 interface Application {
@@ -58,13 +59,12 @@ export default function AdminDashboardPage() {
   }
 
   const statCards = [
-    { label: 'Продуктов', value: stats?.totalProducts ?? 0, color: '#2563eb' },
-    { label: 'Заявок (всего)', value: stats?.totalApplications ?? 0, color: '#7c3aed' },
-    { label: 'Новых заявок', value: stats?.newApplications ?? 0, color: '#2563eb' },
-    { label: 'В работе', value: stats?.inProgressApplications ?? 0, color: '#d97706' },
-    { label: 'Закрыто', value: stats?.closedApplications ?? 0, color: '#059669' },
-    { label: 'Кейсов', value: stats?.totalCases ?? 0, color: '#7c3aed' },
-    { label: 'Постов в блоге', value: stats?.totalBlogPosts ?? 0, color: '#0891b2' },
+    { label: 'Продуктов', value: stats?.products ?? 0, color: '#2563eb' },
+    { label: 'Заявок (всего)', value: stats?.applications?.total ?? 0, color: '#7c3aed' },
+    { label: 'Новых заявок', value: stats?.applications?.new ?? 0, color: '#2563eb' },
+    { label: 'В работе', value: stats?.applications?.in_progress ?? 0, color: '#d97706' },
+    { label: 'Кейсов', value: stats?.cases ?? 0, color: '#7c3aed' },
+    { label: 'Постов в блоге', value: stats?.blogPosts ?? 0, color: '#0891b2' },
   ];
 
   const statusStyles: Record<string, { bg: string; text: string; label: string }> = {

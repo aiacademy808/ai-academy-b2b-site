@@ -10,6 +10,7 @@ export async function GET(request: NextRequest) {
         applicationsTotal,
         applicationsNew,
         applicationsInProgress,
+        applicationsClosed,
         casesCount,
         blogPostsCount,
       ] = await Promise.all([
@@ -17,6 +18,7 @@ export async function GET(request: NextRequest) {
         prisma.application.count(),
         prisma.application.count({ where: { status: 'new' } }),
         prisma.application.count({ where: { status: 'in_progress' } }),
+        prisma.application.count({ where: { status: 'closed' } }),
         prisma.caseStudy.count(),
         prisma.blogPost.count(),
       ]);
@@ -27,6 +29,7 @@ export async function GET(request: NextRequest) {
           total: applicationsTotal,
           new: applicationsNew,
           in_progress: applicationsInProgress,
+          closed: applicationsClosed,
         },
         cases: casesCount,
         blogPosts: blogPostsCount,
