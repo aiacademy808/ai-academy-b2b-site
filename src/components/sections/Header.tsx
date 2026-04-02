@@ -6,10 +6,10 @@ import { Menu, X } from 'lucide-react';
 import Image from 'next/image';
 
 const navLinks = [
-  { label: 'Продукты', href: '#products' },
-  { label: 'Кейсы', href: '#cases' },
-  { label: 'Цены', href: '#pricing' },
-  { label: 'Контакты', href: '#contact' },
+  { label: 'Продукты', href: '/#products' },
+  { label: 'Кейсы', href: '/#cases' },
+  { label: 'Цены', href: '/#pricing' },
+  { label: 'Контакты', href: '/#contact' },
 ];
 
 export default function Header() {
@@ -56,7 +56,7 @@ export default function Header() {
               </a>
             ))}
             <a
-              href="#contact"
+              href="/#contact"
               className="bg-gradient-to-r from-[#00e5ff] to-[#0066ff] text-white text-sm font-medium rounded-full px-6 py-2.5 hover:shadow-glow transition-shadow duration-300"
             >
               Получить аудит
@@ -95,7 +95,7 @@ export default function Header() {
                 </a>
               ))}
               <a
-                href="#contact"
+                href="/#contact"
                 onClick={() => setMobileOpen(false)}
                 className="mt-2 bg-gradient-to-r from-[#00e5ff] to-[#0066ff] text-white text-sm font-medium rounded-full px-6 py-3 text-center hover:shadow-glow transition-shadow"
               >
