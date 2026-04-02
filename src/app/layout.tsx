@@ -25,6 +25,10 @@ export const metadata: Metadata = {
     "автоматизация документов",
     "AI Academy",
   ],
+  icons: {
+    icon: "/favicon.png",
+    apple: "/favicon.png",
+  },
   openGraph: {
     title: "AI Academy — AI-автоматизация для бизнеса Кыргызстана",
     description:
