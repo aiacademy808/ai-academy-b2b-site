@@ -1,6 +1,43 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
+import {
+  ScanLine, ShieldCheck, Plug, Layers, RefreshCw, Database, BrainCircuit, Activity,
+  AudioLines, Star, AlertTriangle, FileText, Bot, MessageSquare, UserPlus, Globe,
+  BarChart3, Cog, Route, Bell, Truck, Landmark, ShoppingCart, Factory,
+  ShoppingBag, Radio, Handshake, Shield, Wrench, UtensilsCrossed, Zap,
+  Brain, Headphones, MessageCircle, CheckCircle, Cpu, TrendingUp, Settings,
+  type LucideIcon,
+} from 'lucide-react';
+
+// --------------- Icon registry ---------------
+const ICON_MAP: Record<string, LucideIcon> = {
+  ScanLine, ShieldCheck, Plug, Layers, RefreshCw, Database, BrainCircuit, Activity,
+  AudioLines, Star, AlertTriangle, FileText, Bot, MessageSquare, UserPlus, Globe,
+  BarChart3, Cog, Route, Bell, Truck, Landmark, ShoppingCart, Factory,
+  ShoppingBag, Radio, Handshake, Shield, Wrench, UtensilsCrossed, Zap,
+  Brain, Headphones, MessageCircle, CheckCircle, Cpu, TrendingUp, Settings,
+};
+
+const ICON_NAMES = Object.keys(ICON_MAP);
+
+// --------------- Types ---------------
+interface KpiItem {
+  value: string;
+  label: string;
+  source: string;
+}
+
+interface PainItem {
+  title: string;
+  description: string;
+}
+
+interface FeatureItem {
+  title: string;
+  description: string;
+  icon: string;
+}
 
 interface PricingTier {
   id?: number;
@@ -21,9 +58,9 @@ interface Product {
   accentColor: string;
   sortOrder: number;
   isActive: boolean;
-  kpiItems: unknown[];
-  pains: unknown[];
-  features: unknown[];
+  kpiItems: KpiItem[];
+  pains: PainItem[];
+  features: FeatureItem[];
   pricingTiers: PricingTier[];
 }
 
@@ -33,6 +70,76 @@ const defaultTiers: PricingTier[] = [
   { tierName: 'Про', price: 0, description: '', features: [], isPopular: false },
 ];
 
+// --------------- Icon Picker Component ---------------
+function IconPicker({
+  value,
+  onChange,
+  onClose,
+}: {
+  value: string;
+  onChange: (icon: string) => void;
+  onClose: () => void;
+}) {
+  const [search, setSearch] = useState('');
+  const filtered = ICON_NAMES.filter((n) =>
+    n.toLowerCase().includes(search.toLowerCase())
+  );
+
+  return (
+    <div className="fixed inset-0 z-[60] flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.4)' }}>
+      <div
+        className="bg-white rounded-xl shadow-2xl w-full max-w-lg mx-4"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between px-5 py-3 border-b" style={{ borderColor: '#e5e7eb' }}>
+          <h4 className="text-sm font-semibold" style={{ color: '#111827' }}>Выберите иконку</h4>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-xl leading-none">&times;</button>
+        </div>
+
+        <div className="px-5 pt-3">
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Поиск..."
+            className="w-full px-3 py-2 rounded-lg border text-sm"
+            style={{ borderColor: '#d1d5db', color: '#111827' }}
+          />
+        </div>
+
+        <div className="p-5 grid grid-cols-6 gap-2 max-h-[340px] overflow-y-auto">
+          {filtered.map((iconName) => {
+            const Icon = ICON_MAP[iconName];
+            const isSelected = value === iconName;
+            return (
+              <button
+                key={iconName}
+                onClick={() => {
+                  onChange(iconName);
+                  onClose();
+                }}
+                title={iconName}
+                className="flex flex-col items-center gap-1 p-2 rounded-lg text-xs transition-colors"
+                style={{
+                  background: isSelected ? '#dbeafe' : '#f9fafb',
+                  border: isSelected ? '2px solid #2563eb' : '1px solid #e5e7eb',
+                  color: isSelected ? '#2563eb' : '#374151',
+                }}
+              >
+                <Icon size={20} />
+                <span className="truncate w-full text-center" style={{ fontSize: '10px' }}>{iconName}</span>
+              </button>
+            );
+          })}
+          {filtered.length === 0 && (
+            <p className="col-span-6 text-center text-sm py-4" style={{ color: '#9ca3af' }}>Ничего не найдено</p>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// --------------- Main Page ---------------
 export default function AdminProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -42,7 +149,7 @@ export default function AdminProductsPage() {
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [saving, setSaving] = useState(false);
 
-  // Form state
+  // Basic form state
   const [name, setName] = useState('');
   const [slug, setSlug] = useState('');
   const [heroTitle, setHeroTitle] = useState('');
@@ -51,10 +158,15 @@ export default function AdminProductsPage() {
   const [accentColor, setAccentColor] = useState('#00e5ff');
   const [sortOrder, setSortOrder] = useState(0);
   const [isActive, setIsActive] = useState(true);
-  const [kpiJson, setKpiJson] = useState('[]');
-  const [painsJson, setPainsJson] = useState('[]');
-  const [featuresJson, setFeaturesJson] = useState('[]');
+
+  // Structured data state
+  const [kpiItems, setKpiItems] = useState<KpiItem[]>([]);
+  const [pains, setPains] = useState<PainItem[]>([]);
+  const [features, setFeatures] = useState<FeatureItem[]>([]);
   const [tiers, setTiers] = useState<PricingTier[]>(defaultTiers);
+
+  // Icon picker state
+  const [iconPickerIndex, setIconPickerIndex] = useState<number | null>(null);
 
   useEffect(() => {
     if (success) {
@@ -88,9 +200,9 @@ export default function AdminProductsPage() {
     setAccentColor('#00e5ff');
     setSortOrder(0);
     setIsActive(true);
-    setKpiJson('[]');
-    setPainsJson('[]');
-    setFeaturesJson('[]');
+    setKpiItems([]);
+    setPains([]);
+    setFeatures([]);
     setTiers(defaultTiers);
   };
 
@@ -110,11 +222,38 @@ export default function AdminProductsPage() {
     setAccentColor(product.accentColor || '#00e5ff');
     setSortOrder(product.sortOrder || 0);
     setIsActive(product.isActive ?? true);
-    setKpiJson(JSON.stringify(product.kpiItems || [], null, 2));
-    setPainsJson(JSON.stringify(product.pains || [], null, 2));
-    setFeaturesJson(JSON.stringify(product.features || [], null, 2));
 
-    // Map pricing tiers
+    // Parse structured data (handle both array and raw formats gracefully)
+    setKpiItems(
+      Array.isArray(product.kpiItems)
+        ? product.kpiItems.map(// eslint-disable-next-line @typescript-eslint/no-explicit-any
+(k: any) => ({
+            value: String(k.value ?? ''),
+            label: String(k.label ?? ''),
+            source: String(k.source ?? ''),
+          }))
+        : []
+    );
+    setPains(
+      Array.isArray(product.pains)
+        ? product.pains.map(// eslint-disable-next-line @typescript-eslint/no-explicit-any
+(p: any) => ({
+            title: String(p.title ?? ''),
+            description: String(p.description ?? ''),
+          }))
+        : []
+    );
+    setFeatures(
+      Array.isArray(product.features)
+        ? product.features.map(// eslint-disable-next-line @typescript-eslint/no-explicit-any
+(f: any) => ({
+            title: String(f.title ?? ''),
+            description: String(f.description ?? ''),
+            icon: String(f.icon ?? ''),
+          }))
+        : []
+    );
+
     const tierMap = new Map(product.pricingTiers.map((t) => [t.tierName, t]));
     setTiers(
       ['Старт', 'Бизнес', 'Про'].map((tierName) => {
@@ -127,12 +266,30 @@ export default function AdminProductsPage() {
     setModalOpen(true);
   };
 
+  // --------------- KPI helpers ---------------
+  const addKpi = () => setKpiItems((prev) => [...prev, { value: '', label: '', source: '' }]);
+  const removeKpi = (i: number) => setKpiItems((prev) => prev.filter((_, idx) => idx !== i));
+  const updateKpi = (i: number, field: keyof KpiItem, val: string) =>
+    setKpiItems((prev) => prev.map((item, idx) => (idx === i ? { ...item, [field]: val } : item)));
+
+  // --------------- Pains helpers ---------------
+  const addPain = () => setPains((prev) => [...prev, { title: '', description: '' }]);
+  const removePain = (i: number) => setPains((prev) => prev.filter((_, idx) => idx !== i));
+  const updatePain = (i: number, field: keyof PainItem, val: string) =>
+    setPains((prev) => prev.map((item, idx) => (idx === i ? { ...item, [field]: val } : item)));
+
+  // --------------- Features helpers ---------------
+  const addFeature = () => setFeatures((prev) => [...prev, { title: '', description: '', icon: '' }]);
+  const removeFeature = (i: number) => setFeatures((prev) => prev.filter((_, idx) => idx !== i));
+  const updateFeature = (i: number, field: keyof FeatureItem, val: string) =>
+    setFeatures((prev) => prev.map((item, idx) => (idx === i ? { ...item, [field]: val } : item)));
+
+  // --------------- Tier helpers ---------------
   const updateTier = (index: number, field: string, value: string | number | boolean | string[]) => {
-    setTiers((prev) =>
-      prev.map((t, i) => (i === index ? { ...t, [field]: value } : t))
-    );
+    setTiers((prev) => prev.map((t, i) => (i === index ? { ...t, [field]: value } : t)));
   };
 
+  // --------------- Save ---------------
   const handleSave = async () => {
     if (!name) {
       setError('Название обязательно');
@@ -141,11 +298,6 @@ export default function AdminProductsPage() {
     setSaving(true);
     setError('');
     try {
-      let parsedKpi, parsedPains, parsedFeatures;
-      try { parsedKpi = JSON.parse(kpiJson); } catch { setError('Невалидный JSON в KPI'); setSaving(false); return; }
-      try { parsedPains = JSON.parse(painsJson); } catch { setError('Невалидный JSON в Pains'); setSaving(false); return; }
-      try { parsedFeatures = JSON.parse(featuresJson); } catch { setError('Невалидный JSON в Features'); setSaving(false); return; }
-
       const body = {
         name,
         slug: slug || name.toLowerCase().replace(/[^a-z0-9а-яё\s-]/gi, '').replace(/\s+/g, '-'),
@@ -155,9 +307,9 @@ export default function AdminProductsPage() {
         accentColor,
         sortOrder,
         isActive,
-        kpiItems: parsedKpi,
-        pains: parsedPains,
-        features: parsedFeatures,
+        kpiItems,
+        pains,
+        features,
         pricingTiers: tiers.map((t) => ({
           ...t,
           price: typeof t.price === 'string' ? parseInt(t.price as string) || 0 : t.price,
@@ -208,6 +360,21 @@ export default function AdminProductsPage() {
       </div>
     );
   }
+
+  // --------------- Section header helper ---------------
+  const SectionHeader = ({ title, onAdd }: { title: string; onAdd: () => void }) => (
+    <div className="flex items-center justify-between mb-3">
+      <h4 className="text-sm font-semibold" style={{ color: '#111827' }}>{title}</h4>
+      <button
+        type="button"
+        onClick={onAdd}
+        className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
+        style={{ background: '#eff6ff', color: '#2563eb' }}
+      >
+        + Добавить
+      </button>
+    </div>
+  );
 
   return (
     <div className="space-y-6">
@@ -292,7 +459,7 @@ export default function AdminProductsPage() {
             </div>
 
             <div className="p-6 space-y-5 max-h-[70vh] overflow-y-auto">
-              {/* Basic fields */}
+              {/* ==================== Basic fields ==================== */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium mb-1" style={{ color: '#374151' }}>Название</label>
@@ -348,32 +515,188 @@ export default function AdminProductsPage() {
                 </div>
               </div>
 
-              {/* JSON editors */}
-              <div>
-                <label className="block text-sm font-medium mb-1" style={{ color: '#374151' }}>
-                  KPI (JSON) <span className="text-gray-400 font-normal">— [{'{'}value, label, source{'}'}]</span>
-                </label>
-                <textarea value={kpiJson} onChange={(e) => setKpiJson(e.target.value)} rows={4}
-                  className="w-full px-3 py-2 rounded-lg border text-sm font-mono" style={{ borderColor: '#d1d5db', color: '#111827', background: '#f9fafb' }} />
+              {/* ==================== KPI Items ==================== */}
+              <div className="border-t pt-5" style={{ borderColor: '#e5e7eb' }}>
+                <SectionHeader title="KPI" onAdd={addKpi} />
+                {kpiItems.length === 0 && (
+                  <p className="text-sm py-3 text-center" style={{ color: '#9ca3af' }}>
+                    Нет KPI. Нажмите &laquo;+ Добавить&raquo; чтобы создать.
+                  </p>
+                )}
+                <div className="space-y-3">
+                  {kpiItems.map((kpi, i) => (
+                    <div key={i} className="relative p-4 rounded-lg border" style={{ borderColor: '#e5e7eb', background: '#f9fafb' }}>
+                      <button
+                        type="button"
+                        onClick={() => removeKpi(i)}
+                        className="absolute top-2 right-2 w-7 h-7 flex items-center justify-center rounded-full text-sm font-medium transition-colors"
+                        style={{ background: '#fef2f2', color: '#dc2626' }}
+                        title="Удалить"
+                      >
+                        &times;
+                      </button>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pr-8">
+                        <div>
+                          <label className="block text-xs mb-1" style={{ color: '#6b7280' }}>Значение</label>
+                          <input
+                            value={kpi.value}
+                            onChange={(e) => updateKpi(i, 'value', e.target.value)}
+                            placeholder="например, 40%"
+                            className="w-full px-3 py-2 rounded-lg border text-sm"
+                            style={{ borderColor: '#d1d5db', color: '#111827', background: '#ffffff' }}
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs mb-1" style={{ color: '#6b7280' }}>Подпись</label>
+                          <input
+                            value={kpi.label}
+                            onChange={(e) => updateKpi(i, 'label', e.target.value)}
+                            placeholder="например, рост выручки"
+                            className="w-full px-3 py-2 rounded-lg border text-sm"
+                            style={{ borderColor: '#d1d5db', color: '#111827', background: '#ffffff' }}
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs mb-1" style={{ color: '#6b7280' }}>Источник</label>
+                          <input
+                            value={kpi.source}
+                            onChange={(e) => updateKpi(i, 'source', e.target.value)}
+                            placeholder="например, McKinsey 2024"
+                            className="w-full px-3 py-2 rounded-lg border text-sm"
+                            style={{ borderColor: '#d1d5db', color: '#111827', background: '#ffffff' }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium mb-1" style={{ color: '#374151' }}>
-                  Проблемы (JSON) <span className="text-gray-400 font-normal">— [{'{'}title, description{'}'}]</span>
-                </label>
-                <textarea value={painsJson} onChange={(e) => setPainsJson(e.target.value)} rows={4}
-                  className="w-full px-3 py-2 rounded-lg border text-sm font-mono" style={{ borderColor: '#d1d5db', color: '#111827', background: '#f9fafb' }} />
+              {/* ==================== Pains ==================== */}
+              <div className="border-t pt-5" style={{ borderColor: '#e5e7eb' }}>
+                <SectionHeader title="Проблемы" onAdd={addPain} />
+                {pains.length === 0 && (
+                  <p className="text-sm py-3 text-center" style={{ color: '#9ca3af' }}>
+                    Нет проблем. Нажмите &laquo;+ Добавить&raquo; чтобы создать.
+                  </p>
+                )}
+                <div className="space-y-3">
+                  {pains.map((pain, i) => (
+                    <div key={i} className="relative p-4 rounded-lg border" style={{ borderColor: '#e5e7eb', background: '#f9fafb' }}>
+                      <button
+                        type="button"
+                        onClick={() => removePain(i)}
+                        className="absolute top-2 right-2 w-7 h-7 flex items-center justify-center rounded-full text-sm font-medium transition-colors"
+                        style={{ background: '#fef2f2', color: '#dc2626' }}
+                        title="Удалить"
+                      >
+                        &times;
+                      </button>
+                      <div className="space-y-3 pr-8">
+                        <div>
+                          <label className="block text-xs mb-1" style={{ color: '#6b7280' }}>Заголовок</label>
+                          <input
+                            value={pain.title}
+                            onChange={(e) => updatePain(i, 'title', e.target.value)}
+                            placeholder="Краткий заголовок проблемы"
+                            className="w-full px-3 py-2 rounded-lg border text-sm"
+                            style={{ borderColor: '#d1d5db', color: '#111827', background: '#ffffff' }}
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs mb-1" style={{ color: '#6b7280' }}>Описание</label>
+                          <textarea
+                            value={pain.description}
+                            onChange={(e) => updatePain(i, 'description', e.target.value)}
+                            rows={2}
+                            placeholder="Подробное описание проблемы"
+                            className="w-full px-3 py-2 rounded-lg border text-sm"
+                            style={{ borderColor: '#d1d5db', color: '#111827', background: '#ffffff' }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium mb-1" style={{ color: '#374151' }}>
-                  Возможности (JSON) <span className="text-gray-400 font-normal">— [{'{'}title, description, icon{'}'}]</span>
-                </label>
-                <textarea value={featuresJson} onChange={(e) => setFeaturesJson(e.target.value)} rows={4}
-                  className="w-full px-3 py-2 rounded-lg border text-sm font-mono" style={{ borderColor: '#d1d5db', color: '#111827', background: '#f9fafb' }} />
+              {/* ==================== Features ==================== */}
+              <div className="border-t pt-5" style={{ borderColor: '#e5e7eb' }}>
+                <SectionHeader title="Возможности" onAdd={addFeature} />
+                {features.length === 0 && (
+                  <p className="text-sm py-3 text-center" style={{ color: '#9ca3af' }}>
+                    Нет возможностей. Нажмите &laquo;+ Добавить&raquo; чтобы создать.
+                  </p>
+                )}
+                <div className="space-y-3">
+                  {features.map((feat, i) => {
+                    const SelectedIcon = feat.icon ? ICON_MAP[feat.icon] : null;
+                    return (
+                      <div key={i} className="relative p-4 rounded-lg border" style={{ borderColor: '#e5e7eb', background: '#f9fafb' }}>
+                        <button
+                          type="button"
+                          onClick={() => removeFeature(i)}
+                          className="absolute top-2 right-2 w-7 h-7 flex items-center justify-center rounded-full text-sm font-medium transition-colors"
+                          style={{ background: '#fef2f2', color: '#dc2626' }}
+                          title="Удалить"
+                        >
+                          &times;
+                        </button>
+                        <div className="space-y-3 pr-8">
+                          <div className="flex items-start gap-3">
+                            {/* Icon picker button */}
+                            <div className="flex-shrink-0">
+                              <label className="block text-xs mb-1" style={{ color: '#6b7280' }}>Иконка</label>
+                              <button
+                                type="button"
+                                onClick={() => setIconPickerIndex(i)}
+                                className="w-12 h-12 flex items-center justify-center rounded-lg border transition-colors"
+                                style={{
+                                  borderColor: feat.icon ? '#2563eb' : '#d1d5db',
+                                  background: feat.icon ? '#eff6ff' : '#ffffff',
+                                  color: feat.icon ? '#2563eb' : '#9ca3af',
+                                }}
+                                title={feat.icon || 'Выбрать иконку'}
+                              >
+                                {SelectedIcon ? <SelectedIcon size={22} /> : <span className="text-lg">+</span>}
+                              </button>
+                              {feat.icon && (
+                                <p className="text-center mt-0.5" style={{ fontSize: '9px', color: '#6b7280' }}>{feat.icon}</p>
+                              )}
+                            </div>
+
+                            <div className="flex-1 space-y-3">
+                              <div>
+                                <label className="block text-xs mb-1" style={{ color: '#6b7280' }}>Заголовок</label>
+                                <input
+                                  value={feat.title}
+                                  onChange={(e) => updateFeature(i, 'title', e.target.value)}
+                                  placeholder="Название возможности"
+                                  className="w-full px-3 py-2 rounded-lg border text-sm"
+                                  style={{ borderColor: '#d1d5db', color: '#111827', background: '#ffffff' }}
+                                />
+                              </div>
+                              <div>
+                                <label className="block text-xs mb-1" style={{ color: '#6b7280' }}>Описание</label>
+                                <textarea
+                                  value={feat.description}
+                                  onChange={(e) => updateFeature(i, 'description', e.target.value)}
+                                  rows={2}
+                                  placeholder="Описание возможности"
+                                  className="w-full px-3 py-2 rounded-lg border text-sm"
+                                  style={{ borderColor: '#d1d5db', color: '#111827', background: '#ffffff' }}
+                                />
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
 
-              {/* Pricing tiers */}
+              {/* ==================== Pricing tiers ==================== */}
               <div className="border-t pt-5" style={{ borderColor: '#e5e7eb' }}>
                 <h4 className="text-sm font-semibold mb-4" style={{ color: '#111827' }}>Тарифы</h4>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -432,6 +755,15 @@ export default function AdminProductsPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Icon Picker Modal */}
+      {iconPickerIndex !== null && (
+        <IconPicker
+          value={features[iconPickerIndex]?.icon || ''}
+          onChange={(icon) => updateFeature(iconPickerIndex, 'icon', icon)}
+          onClose={() => setIconPickerIndex(null)}
+        />
       )}
     </div>
   );
