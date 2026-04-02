@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 
 interface Admin {
-  id: string;
+  id: number;
   username: string;
   name: string;
   role: string;
@@ -60,7 +60,7 @@ export default function AdminAdminsPage() {
     }
   };
 
-  const handleDelete = async (id: string, username: string) => {
+  const handleDelete = async (id: number, username: string) => {
     if (!confirm(`Удалить админа "${username}"?`)) return;
     try {
       await fetch(`/api/admin/admins?id=${id}`, { method: 'DELETE' });
@@ -165,7 +165,7 @@ export default function AdminAdminsPage() {
               {admins.map((admin) => (
                 <tr key={admin.id} className="border-b border-gray-100 hover:bg-gray-50" style={{ borderColor: '#f3f4f6' }}>
                   <td className="px-6 py-4 text-sm text-gray-500 font-mono" style={{ color: '#6b7280' }}>
-                    {admin.id.slice(0, 8)}...
+                    {admin.id}
                   </td>
                   <td className="px-6 py-4 text-sm font-medium text-gray-900" style={{ color: '#111827' }}>{admin.username}</td>
                   <td className="px-6 py-4 text-sm text-gray-600" style={{ color: '#4b5563' }}>{admin.name || '-'}</td>
