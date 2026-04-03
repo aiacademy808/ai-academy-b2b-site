@@ -102,3 +102,15 @@ model SiteSetting {
   key   String @unique
   value String @db.Text
 }
+
+model Partner {
+  id          Int      @id @default(autoincrement())
+  name        String
+  logoUrl     String   @default("")
+  logoDarkUrl String   @default("")
+  darkMode    String   @default("none")
+  url         String   @default("")
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}

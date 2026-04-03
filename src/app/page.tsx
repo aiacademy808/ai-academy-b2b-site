@@ -6,6 +6,7 @@ import Cases from '@/components/sections/Cases';
 import Pricing from '@/components/sections/Pricing';
 import ContactForm from '@/components/sections/ContactForm';
 import Footer from '@/components/sections/Footer';
+import Partners from '@/components/sections/Partners';
 import FloatingWhatsApp from '@/components/sections/FloatingWhatsApp';
 import { getProducts, getCases, getSettings } from '@/lib/data';
 
@@ -58,6 +59,7 @@ export default async function Home() {
       <Products products={serializedProducts} />
       <Cases cases={serializedCases} />
       <Pricing products={serializedProducts} />
+      <Partners />
       <ContactForm productNames={productNames} whatsappNumber={settings.whatsappNumber} />
       <Footer settings={settings} />
       <FloatingWhatsApp number={settings.whatsappNumber} />
