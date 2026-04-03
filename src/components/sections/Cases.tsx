@@ -2,6 +2,7 @@
 
 import { motion } from 'framer-motion';
 import { CheckCircle, Calendar, DollarSign, Zap } from 'lucide-react';
+import { useGeo, convertCostToKZT } from '@/lib/useGeo';
 
 interface CaseData {
   slug: string;
@@ -17,6 +18,8 @@ interface CaseData {
 }
 
 export default function Cases({ cases }: { cases: CaseData[] }) {
+  const { isKZ } = useGeo();
+
   if (cases.length === 0) return null;
 
   return (
@@ -75,7 +78,7 @@ export default function Cases({ cases }: { cases: CaseData[] }) {
                       </div>
                       <div>
                         <div className="text-xs text-gray-500 uppercase tracking-wide mb-1">Стоимость</div>
-                        <div className="text-sm text-white font-medium">{caseItem.cost}</div>
+                        <div className="text-sm text-white font-medium">{isKZ && caseItem.cost ? convertCostToKZT(caseItem.cost) : caseItem.cost}</div>
                       </div>
                     </div>
                   )}
