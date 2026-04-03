@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useRef } from 'react';
-import { Plus, Pencil, Trash2, X, Upload, ImageIcon, Crop, Eraser, ArrowLeftRight } from 'lucide-react';
+import { Plus, Pencil, Trash2, X, Upload, ImageIcon, Crop, Eraser, ArrowLeftRight, Download } from 'lucide-react';
 import ImageCropper from '@/components/ui/ImageCropper';
 import BackgroundRemover from '@/components/ui/BackgroundRemover';
 
@@ -31,6 +31,7 @@ export default function PartnersPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [form, setForm] = useState(emptyForm);
+  const [importing, setImporting] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [uploadingDark, setUploadingDark] = useState(false);
   const [cropImage, setCropImage] = useState<string | null>(null);
@@ -117,6 +118,25 @@ export default function PartnersPage() {
     }
   };
 
+  const handleImport = async () => {
+    if (!confirm('Импортировать партнёров с aiacademy.my?')) return;
+    setImporting(true);
+    try {
+      const res = await fetch('/api/admin/seed-partners', { method: 'POST' });
+      const data = await res.json();
+      if (res.ok) {
+        alert(`Импортировано: ${data.created} из ${data.total}`);
+        fetchPartners();
+      } else {
+        alert(`Ошибка: ${data.error}`);
+      }
+    } catch {
+      alert('Ошибка сети');
+    } finally {
+      setImporting(false);
+    }
+  };
+
   const darkModeLabels: Record<string, string> = {
     none: 'Без изменений',
     dark: 'Перекрасить в тёмный',
@@ -137,13 +157,25 @@ export default function PartnersPage() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-semibold text-gray-800">Партнёры</h3>
-        <button
-          onClick={openCreate}
-          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition"
-        >
-          <Plus size={18} />
-          Добавить партнёра
-        </button>
+        <div className="flex items-center gap-2">
+          {partners.length === 0 && (
+            <button
+              onClick={handleImport}
+              disabled={importing}
+              className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 transition disabled:opacity-50"
+            >
+              <Download size={18} />
+              {importing ? 'Импорт...' : 'Импорт с aiacademy.my'}
+            </button>
+          )}
+          <button
+            onClick={openCreate}
+            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition"
+          >
+            <Plus size={18} />
+            Добавить партнёра
+          </button>
+        </div>
       </div>
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-x-auto">
