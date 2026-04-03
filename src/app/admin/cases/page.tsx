@@ -84,7 +84,7 @@ export default function AdminCasesPage() {
     setSaving(true);
     setError('');
     try {
-      const url = editingCase ? `/api/admin/cases?id=${editingCase.id}` : '/api/admin/cases';
+      const url = editingCase ? `/api/admin/cases/${editingCase.id}` : '/api/admin/cases';
       const method = editingCase ? 'PUT' : 'POST';
       const res = await fetch(url, {
         method,
@@ -107,7 +107,7 @@ export default function AdminCasesPage() {
   const handleDelete = async (id: string) => {
     if (!confirm('Удалить кейс?')) return;
     try {
-      await fetch(`/api/admin/cases?id=${id}`, { method: 'DELETE' });
+      await fetch(`/api/admin/cases/${id}`, { method: 'DELETE' });
       fetchCases();
     } catch {
       setError('Не удалось удалить кейс');
