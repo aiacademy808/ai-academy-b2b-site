@@ -26,21 +26,30 @@ export default function Partners() {
   const displayPartners = [...partners, ...partners, ...partners];
   const duration = partners.length * 5;
 
+  const darkModeClass = (mode: string) => {
+    switch (mode) {
+      case 'dark':
+        return 'brightness-0';
+      case 'invert':
+        return 'invert';
+      case 'white':
+        return 'brightness-0 invert';
+      default:
+        return '';
+    }
+  };
+
   const PartnerCard = ({ partner }: { partner: Partner }) => {
+    const hasSeparateDarkLogo = partner.darkMode === 'separate' && partner.logoDarkUrl;
+
     const content = (
       <div className="flex-shrink-0 flex flex-col items-center gap-3 px-8 py-6 w-[200px] group cursor-pointer">
         {partner.logoUrl ? (
           <div className="h-16 w-40 flex items-center justify-center opacity-70 group-hover:opacity-100 transition-opacity duration-300">
             <img
-              src={partner.logoUrl}
+              src={hasSeparateDarkLogo ? partner.logoDarkUrl : partner.logoUrl}
               alt={partner.name}
-              className={`max-h-full max-w-full object-contain ${
-                partner.darkMode === 'invert'
-                  ? 'invert'
-                  : partner.darkMode === 'white'
-                  ? 'brightness-0 invert'
-                  : ''
-              }`}
+              className={`max-h-full max-w-full object-contain ${hasSeparateDarkLogo ? '' : darkModeClass(partner.darkMode)}`}
             />
           </div>
         ) : (

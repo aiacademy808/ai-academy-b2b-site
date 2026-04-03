@@ -1,7 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { Plus, Pencil, Trash2, X, ImageIcon } from 'lucide-react';
+import { useEffect, useState, useRef } from 'react';
+import { Plus, Pencil, Trash2, X, Upload, ImageIcon, Crop, Eraser, ArrowLeftRight } from 'lucide-react';
+import ImageCropper from '@/components/ui/ImageCropper';
+import BackgroundRemover from '@/components/ui/BackgroundRemover';
 
 interface Partner {
   id: number;
@@ -11,6 +13,7 @@ interface Partner {
   darkMode: string;
   url: string;
   sortOrder: number;
+  createdAt: string;
 }
 
 const emptyForm = {
@@ -28,6 +31,14 @@ export default function PartnersPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [form, setForm] = useState(emptyForm);
+  const [uploading, setUploading] = useState(false);
+  const [uploadingDark, setUploadingDark] = useState(false);
+  const [cropImage, setCropImage] = useState<string | null>(null);
+  const [cropTarget, setCropTarget] = useState<'logo' | 'logoDark'>('logo');
+  const [bgRemoveImage, setBgRemoveImage] = useState<string | null>(null);
+  const [bgRemoveTarget, setBgRemoveTarget] = useState<'logo' | 'logoDark'>('logo');
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const fileDarkInputRef = useRef<HTMLInputElement>(null);
 
   const fetchPartners = async () => {
     try {
@@ -82,10 +93,36 @@ export default function PartnersPage() {
     fetchPartners();
   };
 
+  const uploadFile = async (
+    file: File,
+    setter: (url: string) => void,
+    setLoadingFn: (v: boolean) => void
+  ) => {
+    setLoadingFn(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      const res = await fetch('/api/upload', { method: 'POST', body: formData });
+      const data = await res.json();
+      if (res.ok) {
+        setter(data.url);
+      } else {
+        alert(`Ошибка загрузки: ${data.error || 'Неизвестная ошибка'}`);
+      }
+    } catch (err) {
+      alert('Ошибка сети при загрузке файла');
+      console.error(err);
+    } finally {
+      setLoadingFn(false);
+    }
+  };
+
   const darkModeLabels: Record<string, string> = {
     none: 'Без изменений',
+    dark: 'Перекрасить в тёмный',
     invert: 'Инвертировать цвета',
     white: 'Перекрасить в белый',
+    separate: 'Отдельный логотип',
   };
 
   if (loading) {
@@ -179,7 +216,10 @@ export default function PartnersPage() {
               <h3 className="text-lg font-semibold text-gray-800">
                 {editingId ? 'Редактировать партнёра' : 'Новый партнёр'}
               </h3>
-              <button onClick={() => setModalOpen(false)} className="text-gray-400 hover:text-gray-600">
+              <button
+                onClick={() => setModalOpen(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
                 <X size={20} />
               </button>
             </div>
@@ -194,19 +234,58 @@ export default function PartnersPage() {
                   placeholder="Название компании"
                 />
               </div>
-
               <div>
-                <label className="block text-sm font-bold text-gray-700 mb-1">URL логотипа</label>
+                <label className="block text-sm font-bold text-gray-700 mb-1">Логотип</label>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      const reader = new FileReader();
+                      reader.onload = () => {
+                        setCropTarget('logo');
+                        setCropImage(reader.result as string);
+                      };
+                      reader.readAsDataURL(file);
+                    }
+                    if (fileInputRef.current) fileInputRef.current.value = '';
+                  }}
+                  className="hidden"
+                />
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploading}
+                  className="flex items-center gap-2 bg-gray-100 hover:bg-gray-200 rounded-lg px-4 py-2 text-sm text-gray-700 transition mb-2 disabled:opacity-50"
+                >
+                  <Upload size={16} />
+                  {uploading ? 'Загрузка...' : 'Загрузить лого'}
+                </button>
                 <div className="flex items-center gap-2">
                   <input
                     type="text"
                     value={form.logoUrl}
                     onChange={(e) => setForm({ ...form, logoUrl: e.target.value })}
                     className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm"
-                    placeholder="https://example.com/logo.png"
+                    placeholder="Или вставьте URL логотипа"
                   />
                   {form.logoUrl ? (
-                    <img src={form.logoUrl} alt="Preview" className="w-10 h-10 rounded-lg object-contain bg-gray-50 flex-shrink-0" />
+                    <div className="relative flex-shrink-0 group/img">
+                      <img
+                        src={form.logoUrl}
+                        alt="Preview"
+                        className="w-10 h-10 rounded-lg object-contain bg-gray-50"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => { setCropTarget('logo'); setCropImage(form.logoUrl); }}
+                        className="absolute inset-0 bg-black/50 rounded-lg flex items-center justify-center opacity-0 group-hover/img:opacity-100 transition-opacity"
+                      >
+                        <Crop size={14} className="text-white" />
+                      </button>
+                    </div>
                   ) : (
                     <div className="w-10 h-10 rounded-lg border border-dashed border-gray-300 flex items-center justify-center flex-shrink-0">
                       <ImageIcon size={16} className="text-gray-300" />
@@ -214,26 +293,40 @@ export default function PartnersPage() {
                   )}
                 </div>
                 {form.logoUrl && (
-                  <button
-                    type="button"
-                    onClick={() => setForm({ ...form, logoUrl: '' })}
-                    className="text-sm text-red-500 hover:text-red-700 mt-1"
-                  >
-                    Удалить
-                  </button>
+                  <div className="flex items-center gap-3 mt-1">
+                    {!form.logoUrl.endsWith('.svg') && (
+                      <button
+                        type="button"
+                        onClick={() => { setBgRemoveTarget('logo'); setBgRemoveImage(form.logoUrl); }}
+                        className="text-sm text-blue-600 hover:text-blue-700 flex items-center gap-1"
+                      >
+                        <Eraser size={14} />
+                        Убрать фон
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => setForm({ ...form, logoUrl: '' })}
+                      className="text-sm text-red-500 hover:text-red-700"
+                    >
+                      Удалить
+                    </button>
+                  </div>
                 )}
               </div>
 
               {/* Dark mode settings */}
               <div className="border-t border-gray-200 pt-4">
                 <label className="block text-sm font-bold text-gray-700 mb-2">
-                  Отображение на сайте (тёмный фон)
+                  Отображение в тёмной теме
                 </label>
                 <div className="space-y-2">
                   {[
                     { value: 'none', label: 'Без изменений', desc: 'Логотип отображается как есть' },
+                    { value: 'dark', label: 'Перекрасить в тёмный', desc: 'Логотип станет тёмным для светлой темы' },
                     { value: 'invert', label: 'Инвертировать цвета', desc: 'Тёмное станет светлым и наоборот' },
                     { value: 'white', label: 'Перекрасить в белый', desc: 'Весь логотип станет белым' },
+                    { value: 'separate', label: 'Отдельный логотип', desc: 'Загрузить другой файл для тёмной темы' },
                   ].map((opt) => (
                     <label
                       key={opt.value}
@@ -259,19 +352,118 @@ export default function PartnersPage() {
                   ))}
                 </div>
 
-                {/* Preview on dark bg */}
+                {/* Preview */}
                 {form.logoUrl && (
-                  <div className="mt-3">
-                    <p className="text-xs text-gray-400 mb-1">Превью на тёмном фоне</p>
-                    <div className="w-24 h-16 bg-[#060810] border border-gray-700 rounded-lg flex items-center justify-center p-2">
-                      <img
-                        src={form.logoUrl}
-                        alt="Preview"
-                        className={`max-w-full max-h-full object-contain ${
-                          form.darkMode === 'invert' ? 'invert' : ''
-                        } ${form.darkMode === 'white' ? 'brightness-0 invert' : ''}`}
-                      />
+                  <div className="mt-3 flex items-center gap-2">
+                    <div className="text-center">
+                      <p className="text-xs text-gray-400 mb-1">Светлая</p>
+                      <div className="w-20 h-14 bg-white border border-gray-200 rounded-lg flex items-center justify-center p-2">
+                        <img
+                          src={form.logoUrl}
+                          alt="Light"
+                          className={`max-w-full max-h-full object-contain ${
+                            form.darkMode === 'dark' ? 'brightness-0' : ''
+                          }`}
+                        />
+                      </div>
                     </div>
+                    {form.darkMode === 'separate' && form.logoDarkUrl && (
+                      <button
+                        type="button"
+                        onClick={() => setForm({ ...form, logoUrl: form.logoDarkUrl, logoDarkUrl: form.logoUrl })}
+                        className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition mt-4"
+                        title="Поменять местами"
+                      >
+                        <ArrowLeftRight size={16} />
+                      </button>
+                    )}
+                    <div className="text-center">
+                      <p className="text-xs text-gray-400 mb-1">Тёмная</p>
+                      <div className="w-20 h-14 bg-[#060810] border border-gray-700 rounded-lg flex items-center justify-center p-2">
+                        {form.darkMode === 'separate' && form.logoDarkUrl ? (
+                          <img src={form.logoDarkUrl} alt="Dark" className="max-w-full max-h-full object-contain" />
+                        ) : (
+                          <img
+                            src={form.logoUrl}
+                            alt="Dark preview"
+                            className={`max-w-full max-h-full object-contain ${
+                              form.darkMode === 'invert' ? 'invert' : ''
+                            } ${form.darkMode === 'white' ? 'brightness-0 invert' : ''}`}
+                          />
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Separate dark logo upload */}
+                {form.darkMode === 'separate' && (
+                  <div className="mt-3">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Логотип для тёмной темы
+                    </label>
+                    <input
+                      ref={fileDarkInputRef}
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          const reader = new FileReader();
+                          reader.onload = () => {
+                            setCropTarget('logoDark');
+                            setCropImage(reader.result as string);
+                          };
+                          reader.readAsDataURL(file);
+                        }
+                        if (fileDarkInputRef.current) fileDarkInputRef.current.value = '';
+                      }}
+                      className="hidden"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => fileDarkInputRef.current?.click()}
+                      disabled={uploadingDark}
+                      className="flex items-center gap-2 bg-gray-100 hover:bg-gray-200 rounded-lg px-4 py-2 text-sm text-gray-700 transition mb-2 disabled:opacity-50"
+                    >
+                      <Upload size={16} />
+                      {uploadingDark ? 'Загрузка...' : 'Загрузить лого для тёмной темы'}
+                    </button>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="text"
+                        value={form.logoDarkUrl}
+                        onChange={(e) => setForm({ ...form, logoDarkUrl: e.target.value })}
+                        className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm"
+                        placeholder="URL логотипа для тёмной темы"
+                      />
+                      {form.logoDarkUrl && (
+                        <div className="relative flex-shrink-0 group/img">
+                          <img
+                            src={form.logoDarkUrl}
+                            alt="Dark preview"
+                            className="w-10 h-10 rounded-lg object-contain bg-gray-900"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => { setCropTarget('logoDark'); setCropImage(form.logoDarkUrl); }}
+                            className="absolute inset-0 bg-black/50 rounded-lg flex items-center justify-center opacity-0 group-hover/img:opacity-100 transition-opacity"
+                          >
+                            <Crop size={14} className="text-white" />
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                    {form.logoDarkUrl && !form.logoDarkUrl.endsWith('.svg') && (
+                      <button
+                        type="button"
+                        onClick={() => { setBgRemoveTarget('logoDark'); setBgRemoveImage(form.logoDarkUrl); }}
+                        className="text-sm text-blue-600 hover:text-blue-700 flex items-center gap-1 mt-1"
+                      >
+                        <Eraser size={14} />
+                        Убрать фон
+                      </button>
+                    )}
                   </div>
                 )}
               </div>
@@ -312,6 +504,42 @@ export default function PartnersPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {cropImage && (
+        <ImageCropper
+          imageSrc={cropImage}
+          onCancel={() => setCropImage(null)}
+          onComplete={(blob) => {
+            setCropImage(null);
+            const file = new File([blob], 'cropped.png', { type: 'image/png' });
+            const field = cropTarget === 'logoDark' ? 'logoDarkUrl' : 'logoUrl';
+            const setLoadingFn = cropTarget === 'logoDark' ? setUploadingDark : setUploading;
+            uploadFile(
+              file,
+              (url) => setForm((prev) => ({ ...prev, [field]: url })),
+              setLoadingFn
+            );
+          }}
+        />
+      )}
+
+      {bgRemoveImage && (
+        <BackgroundRemover
+          imageSrc={bgRemoveImage}
+          onCancel={() => setBgRemoveImage(null)}
+          onComplete={(blob) => {
+            setBgRemoveImage(null);
+            const file = new File([blob], 'nobg.png', { type: 'image/png' });
+            const field = bgRemoveTarget === 'logoDark' ? 'logoDarkUrl' : 'logoUrl';
+            const setLoadingFn = bgRemoveTarget === 'logoDark' ? setUploadingDark : setUploading;
+            uploadFile(
+              file,
+              (url) => setForm((prev) => ({ ...prev, [field]: url })),
+              setLoadingFn
+            );
+          }}
+        />
       )}
     </div>
   );
