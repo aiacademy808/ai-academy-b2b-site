@@ -2,6 +2,7 @@
 
 import { motion } from 'framer-motion';
 import { ArrowRight, ChevronDown } from 'lucide-react';
+import { useGeo } from '@/lib/useGeo';
 
 const kpis = [
   {
@@ -31,6 +32,9 @@ const fadeUp = {
 };
 
 export default function Hero() {
+  const { isKZ } = useGeo();
+  const countryName = isKZ ? 'Казахстана' : 'Кыргызстана';
+
   return (
     <section className="relative min-h-screen flex items-center justify-center bg-[#060810] overflow-hidden">
       {/* Background effects */}
@@ -49,7 +53,7 @@ export default function Hero() {
           <span className="gradient-brand-text">
             для бизнеса
           </span>{' '}
-          Кыргызстана
+          {countryName}
         </motion.h1>
 
         <motion.p

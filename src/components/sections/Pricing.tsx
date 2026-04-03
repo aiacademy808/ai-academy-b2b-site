@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { ChevronDown } from 'lucide-react';
+import { useGeo } from '@/lib/useGeo';
 
 interface PricingTier {
   tierName: string;
@@ -19,11 +20,21 @@ interface ProductWithPricing {
 
 const tierOrder = ['Старт', 'Бизнес', 'Про'];
 
+// 1 KGS ≈ 5.5 KZT (approximate)
+const KGS_TO_KZT = 5.5;
+
 export default function Pricing({ products }: { products: ProductWithPricing[] }) {
   const [openProduct, setOpenProduct] = useState<number | null>(null);
+  const { isKZ } = useGeo();
+
+  const multiplier = isKZ ? 1.5 : 1;
+  const currency = isKZ ? 'KZT' : 'KGS';
 
   const formatPrice = (price: number) => {
-    return price.toLocaleString('ru-RU');
+    const adjusted = Math.round(price * multiplier * (isKZ ? KGS_TO_KZT : 1));
+    // Round to nearest 10000 for KZ
+    const rounded = isKZ ? Math.round(adjusted / 10000) * 10000 : adjusted;
+    return rounded.toLocaleString('ru-RU');
   };
 
   return (
@@ -143,7 +154,7 @@ export default function Pricing({ products }: { products: ProductWithPricing[] }
                           <div className="text-xl font-bold text-white">
                             {formatPrice(tier.price)}
                           </div>
-                          <div className="text-xs text-gray-500 mt-1">KGS</div>
+                          <div className="text-xs text-gray-500 mt-1">{currency}</div>
                           <div className="text-xs text-gray-400 mt-2">
                             {tier.description}
                           </div>
@@ -164,8 +175,7 @@ export default function Pricing({ products }: { products: ProductWithPricing[] }
           transition={{ delay: 0.3 }}
           className="text-center text-sm text-gray-500 mt-10"
         >
-          * Все цены указаны в KGS. Для клиентов Казахстана применяется
-          коэффициент ×2.
+          * Все цены указаны в {currency}.
         </motion.p>
       </div>
     </section>
