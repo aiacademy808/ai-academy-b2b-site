@@ -263,16 +263,41 @@ export default function AdminCasesPage() {
                   <input value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })} className="w-full px-3 py-2 rounded-lg border text-sm text-gray-900" style={{ borderColor: '#d1d5db', color: '#111827', background: '#ffffff' }} />
                 </div>
               </div>
-              <div>
-                <label className="flex items-center gap-2 text-sm font-medium text-gray-700 cursor-pointer" style={{ color: '#374151' }}>
-                  <input
-                    type="checkbox"
-                    checked={form.isPublished}
-                    onChange={(e) => setForm({ ...form, isPublished: e.target.checked })}
-                    className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+              <div
+                className="flex items-center justify-between rounded-xl px-5 py-4 cursor-pointer select-none"
+                style={{
+                  background: form.isPublished ? '#ecfdf5' : '#f9fafb',
+                  border: form.isPublished ? '2px solid #10b981' : '2px solid #e5e7eb',
+                }}
+                onClick={() => setForm({ ...form, isPublished: !form.isPublished })}
+              >
+                <div className="flex items-center gap-3">
+                  <div
+                    className="w-6 h-6 rounded-full flex items-center justify-center text-white text-sm font-bold"
+                    style={{
+                      background: form.isPublished ? '#10b981' : '#d1d5db',
+                    }}
+                  >
+                    {form.isPublished ? '✓' : ''}
+                  </div>
+                  <div>
+                    <div className="text-sm font-semibold" style={{ color: form.isPublished ? '#065f46' : '#374151' }}>
+                      {form.isPublished ? 'Опубликован' : 'Черновик'}
+                    </div>
+                    <div className="text-xs" style={{ color: form.isPublished ? '#059669' : '#9ca3af' }}>
+                      {form.isPublished ? 'Кейс виден на сайте' : 'Кейс скрыт от посетителей'}
+                    </div>
+                  </div>
+                </div>
+                <div
+                  className="relative w-12 h-7 rounded-full transition-colors duration-200"
+                  style={{ background: form.isPublished ? '#10b981' : '#d1d5db' }}
+                >
+                  <div
+                    className="absolute top-0.5 w-6 h-6 rounded-full bg-white shadow-md transition-transform duration-200"
+                    style={{ transform: form.isPublished ? 'translateX(22px)' : 'translateX(2px)' }}
                   />
-                  Опубликован
-                </label>
+                </div>
               </div>
             </div>
 
