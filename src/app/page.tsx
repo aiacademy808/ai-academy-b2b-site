@@ -7,15 +7,17 @@ import Pricing from '@/components/sections/Pricing';
 import ContactForm from '@/components/sections/ContactForm';
 import Footer from '@/components/sections/Footer';
 import Partners from '@/components/sections/Partners';
+import Blog from '@/components/sections/Blog';
 import FloatingWhatsApp from '@/components/sections/FloatingWhatsApp';
-import { getProducts, getCases, getSettings } from '@/lib/data';
+import { getProducts, getCases, getBlogPosts, getSettings } from '@/lib/data';
 
 export const dynamic = 'force-dynamic';
 
 export default async function Home() {
-  const [products, cases, settings] = await Promise.all([
+  const [products, cases, blogPosts, settings] = await Promise.all([
     getProducts(),
     getCases(),
+    getBlogPosts(),
     getSettings(),
   ]);
 
@@ -49,6 +51,17 @@ export default async function Home() {
     quoteAuthor: c.quoteAuthor,
   }));
 
+  const serializedBlogPosts = blogPosts.map((p) => ({
+    slug: p.slug,
+    title: p.title,
+    excerpt: p.excerpt,
+    videoUrl: p.videoUrl,
+    // Send only preview (first 200 chars) to reduce payload
+    content: p.excerpt ? '' : p.content.slice(0, 200),
+    publishedAt: p.publishedAt?.toISOString() || null,
+    createdAt: p.createdAt.toISOString(),
+  }));
+
   const productNames = products.map((p) => p.name);
 
   return (
@@ -60,6 +73,7 @@ export default async function Home() {
       <Cases cases={serializedCases} />
       <Pricing products={serializedProducts} />
       <Partners />
+      <Blog posts={serializedBlogPosts} />
       <ContactForm productNames={productNames} whatsappNumber={settings.whatsappNumber} />
       <Footer settings={settings} />
       <FloatingWhatsApp number={settings.whatsappNumber} />

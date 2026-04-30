@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
+import { extractYouTubeId } from '@/lib/youtube';
 
 interface BlogPost {
   id: string;
@@ -8,6 +9,7 @@ interface BlogPost {
   slug: string;
   content: string;
   excerpt: string;
+  videoUrl: string;
   isPublished: boolean;
   createdAt: string;
 }
@@ -17,6 +19,7 @@ const emptyPost: Omit<BlogPost, 'id' | 'createdAt'> = {
   slug: '',
   content: '',
   excerpt: '',
+  videoUrl: '',
   isPublished: false,
 };
 
@@ -58,6 +61,7 @@ export default function AdminBlogPage() {
       slug: post.slug,
       content: post.content || '',
       excerpt: post.excerpt || '',
+      videoUrl: post.videoUrl || '',
       isPublished: post.isPublished ?? false,
     });
     setModalOpen(true);
@@ -67,7 +71,7 @@ export default function AdminBlogPage() {
     setSaving(true);
     setError('');
     try {
-      const url = editingPost ? `/api/admin/blog?id=${editingPost.id}` : '/api/admin/blog';
+      const url = editingPost ? `/api/admin/blog/${editingPost.id}` : '/api/admin/blog';
       const method = editingPost ? 'PUT' : 'POST';
       const res = await fetch(url, {
         method,
@@ -90,12 +94,14 @@ export default function AdminBlogPage() {
   const handleDelete = async (id: string) => {
     if (!confirm('Удалить пост?')) return;
     try {
-      await fetch(`/api/admin/blog?id=${id}`, { method: 'DELETE' });
+      await fetch(`/api/admin/blog/${id}`, { method: 'DELETE' });
       fetchPosts();
     } catch {
       setError('Не удалось удалить пост');
     }
   };
+
+  const videoId = extractYouTubeId(form.videoUrl);
 
   if (loading) {
     return (
@@ -128,6 +134,7 @@ export default function AdminBlogPage() {
               <tr className="border-b border-gray-200" style={{ borderColor: '#e5e7eb' }}>
                 <th className="text-left px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider" style={{ color: '#6b7280' }}>Заголовок</th>
                 <th className="text-left px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider" style={{ color: '#6b7280' }}>Slug</th>
+                <th className="text-left px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider" style={{ color: '#6b7280' }}>Видео</th>
                 <th className="text-left px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider" style={{ color: '#6b7280' }}>Опубликован</th>
                 <th className="text-left px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider" style={{ color: '#6b7280' }}>Дата</th>
                 <th className="text-right px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider" style={{ color: '#6b7280' }}>Действия</th>
@@ -138,6 +145,19 @@ export default function AdminBlogPage() {
                 <tr key={post.id} className="border-b border-gray-100 hover:bg-gray-50" style={{ borderColor: '#f3f4f6' }}>
                   <td className="px-6 py-4 text-sm font-medium text-gray-900" style={{ color: '#111827' }}>{post.title}</td>
                   <td className="px-6 py-4 text-sm text-gray-500" style={{ color: '#6b7280' }}>{post.slug}</td>
+                  <td className="px-6 py-4">
+                    {post.videoUrl ? (
+                      <span
+                        className="inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-medium"
+                        style={{ background: '#fef3c7', color: '#d97706' }}
+                      >
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814z"/><path d="M9.545 15.568V8.432L15.818 12l-6.273 3.568z" fill="#fff"/></svg>
+                        YouTube
+                      </span>
+                    ) : (
+                      <span className="text-xs text-gray-400" style={{ color: '#9ca3af' }}>-</span>
+                    )}
+                  </td>
                   <td className="px-6 py-4">
                     <span
                       className="inline-flex rounded-full px-3 py-1 text-xs font-medium"
@@ -164,7 +184,7 @@ export default function AdminBlogPage() {
               ))}
               {posts.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="px-6 py-8 text-center text-gray-500" style={{ color: '#6b7280' }}>
+                  <td colSpan={6} className="px-6 py-8 text-center text-gray-500" style={{ color: '#6b7280' }}>
                     Постов пока нет
                   </td>
                 </tr>
@@ -198,6 +218,39 @@ export default function AdminBlogPage() {
                 <label className="block text-sm font-medium text-gray-700 mb-1" style={{ color: '#374151' }}>Краткое описание</label>
                 <textarea value={form.excerpt} onChange={(e) => setForm({ ...form, excerpt: e.target.value })} rows={2} className="w-full px-3 py-2 rounded-lg border text-sm text-gray-900" style={{ borderColor: '#d1d5db', color: '#111827', background: '#ffffff' }} />
               </div>
+
+              {/* YouTube Video URL */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1" style={{ color: '#374151' }}>
+                  Видео YouTube (ссылка)
+                </label>
+                <input
+                  value={form.videoUrl}
+                  onChange={(e) => setForm({ ...form, videoUrl: e.target.value })}
+                  placeholder="https://www.youtube.com/watch?v=..."
+                  className="w-full px-3 py-2 rounded-lg border text-sm text-gray-900"
+                  style={{ borderColor: '#d1d5db', color: '#111827', background: '#ffffff' }}
+                />
+                {videoId && (
+                  <div className="mt-3 rounded-lg overflow-hidden border" style={{ borderColor: '#e5e7eb' }}>
+                    <div className="relative w-full" style={{ paddingBottom: '56.25%' }}>
+                      <iframe
+                        src={`https://www.youtube.com/embed/${videoId}`}
+                        className="absolute inset-0 w-full h-full"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowFullScreen
+                        title="YouTube preview"
+                      />
+                    </div>
+                  </div>
+                )}
+                {form.videoUrl && !videoId && (
+                  <p className="mt-1 text-xs" style={{ color: '#dc2626' }}>
+                    Не удалось распознать YouTube-ссылку. Поддерживаются форматы: youtube.com/watch?v=..., youtu.be/..., youtube.com/shorts/...
+                  </p>
+                )}
+              </div>
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1" style={{ color: '#374151' }}>Содержимое</label>
                 <textarea value={form.content} onChange={(e) => setForm({ ...form, content: e.target.value })} rows={12} className="w-full px-3 py-2 rounded-lg border text-sm font-mono text-gray-900" style={{ borderColor: '#d1d5db', color: '#111827', background: '#f9fafb' }} />

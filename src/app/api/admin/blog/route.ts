@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth } from '@/lib/admin-auth';
 import prisma from '@/lib/prisma';
+import { isValidYouTubeUrl } from '@/lib/youtube';
 
 export async function GET(request: NextRequest) {
   return withAuth(request, async () => {
@@ -24,7 +25,7 @@ export async function POST(request: NextRequest) {
   return withAuth(request, async (req) => {
     try {
       const body = await req.json();
-      const { title, content, ...rest } = body;
+      const { title, content, slug: formSlug, excerpt, imageUrl, videoUrl, isPublished } = body;
 
       if (!title || !content) {
         return NextResponse.json(
@@ -33,7 +34,16 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      const slug = title
+      // Validate videoUrl if provided
+      if (videoUrl && !isValidYouTubeUrl(videoUrl)) {
+        return NextResponse.json(
+          { error: 'Invalid YouTube URL' },
+          { status: 400 }
+        );
+      }
+
+      // Use form slug if provided, otherwise auto-generate from title
+      const slug = formSlug || title
         .toLowerCase()
         .replace(/[^a-z0-9а-яё\s-]/gi, '')
         .replace(/\s+/g, '-')
@@ -45,10 +55,11 @@ export async function POST(request: NextRequest) {
           title,
           slug,
           content,
-          excerpt: rest.excerpt || null,
-          imageUrl: rest.imageUrl || null,
-          isPublished: rest.isPublished || false,
-          publishedAt: rest.isPublished ? new Date() : null,
+          excerpt: excerpt || null,
+          imageUrl: imageUrl || null,
+          videoUrl: videoUrl || null,
+          isPublished: isPublished || false,
+          publishedAt: isPublished ? new Date() : null,
         },
       });
 

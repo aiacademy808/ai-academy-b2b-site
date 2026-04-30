@@ -22,6 +22,14 @@ export async function getCases() {
   });
 }
 
+export async function getBlogPosts(limit = 6) {
+  return prisma.blogPost.findMany({
+    where: { isPublished: true },
+    orderBy: { createdAt: 'desc' },
+    take: limit,
+  });
+}
+
 export async function getSettings() {
   const settings = await prisma.siteSetting.findMany();
   const map: Record<string, string> = {};
